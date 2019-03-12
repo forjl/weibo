@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Auth;
 use Mail;
+use Hash;
 
 class UsersController extends Controller
 {
@@ -67,20 +68,46 @@ class UsersController extends Controller
         $this->authorize('update',$user);
         $this->validate($request,[
             'name' => 'required|max:50',
-            'password' => 'required|confirmed|min:6',
         ]);
 
         $data = [];
         $data['name'] = $request->name;
-        if($request->password){
-            $data['password'] = bcrypt($request->password);
-        }
 
         $user->update($data);
 
         session()->flash('success','个人资料更新成功！');
 
         return redirect()->route('users.show',$user->id);
+    }
+
+    public function reset(User $user)
+    {
+        $this->authorize('update',$user);
+        return view('users.resetPByOP',compact('user'));
+    }
+
+    public function resetP(Request $request,User $user)
+    {
+        $this->authorize('update',$user);
+        $this->validate($request,[
+            'oldPassword' => 'required',
+            'newPassword' => 'required|min:6|max:16|confirmed'
+        ]);
+
+        if(Hash::check($request->oldPassword,$user->password)){
+            $user->update(['password' => bcrypt($request->newPassword)]);
+
+            session()->flash('success','密码修改成功，请重新登录！');
+
+            Auth::logout();
+
+            return redirect('login');
+        }
+        else{
+            session()->flash('danger','密码错误，请重新输入！');
+
+            return back();
+        }
     }
 
     public function destroy(User $user)
