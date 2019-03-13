@@ -10,7 +10,7 @@
       <div class="card-body">
 
         @include('shared._errors')
-        <form method="POST" action="route('users.resetP',$user->id) }}">
+        <form method="POST" action="{{ route('users.resetP',$user->id) }}">
             {{ method_field('PATCH') }}
             {{ csrf_field() }}
 
